@@ -1,47 +1,62 @@
 # ind_proekt
 # Программа для ведения учета личных финансов
-transactions = [
-    ["2024-03-25", "10:00", "приход", "зарплата", 50000, "ООО Работа"],
-    ["2024-03-24", "19:30", "расход", "питание", 1500, "Пятерочка"],
-    ["2024-03-24", "20:00", "расход", "развлечения", 2000, "Кинотеатр"],
-    ["2024-03-23", "09:00", "расход", "транспорт", 100, "Метро"],
-    ["2024-03-23", "12:00", "расход", "питание", 500, "Кафе"],
-    ["2024-03-22", "18:00", "расход", "развлечения", 3000, "Концерт"],
-    ["2024-03-22", "20:30", "расход", "питание", 1200, "Ресторан"],
-    ["2024-03-21", "14:00", "приход", "аванс", 25000, "ООО Работа"],
-    ["2024-03-21", "19:15", "расход", "развлечения", 1500, "Боулинг"],
-    ["2024-03-20", "08:30", "расход", "транспорт", 150, "Такси"],
-    ["2024-03-20", "21:00", "расход", "развлечения", 2500, "Театр"],
-    ["2024-03-19", "17:45", "расход", "питание", 900, "Магазин"],
-    ["2024-03-18", "19:20", "расход", "развлечения", 1800, "Караоке"],
-    ["2024-03-17", "11:00", "приход", "подарок", 10000, "Родители"],
-    ["2024-03-16", "16:30", "расход", "коммуналка", 5000, "ЖКХ"],
-    ["2024-03-15", "13:00", "расход", "одежда", 8000, "Магазин одежды"],
-    ["2024-03-14", "15:00", "расход", "медицина", 3000, "Аптека"],
-    ["2024-03-13", "10:30", "приход", "премия", 15000, "ООО Работа"],
-    ["2024-03-12", "14:20", "расход", "образование", 10000, "Курсы"],
-    ["2024-03-11", "12:00", "расход", "кредит", 15000, "Банк"],
-    ["2024-03-10", "19:40", "расход", "питание", 800, "Суши-бар"],
-    ["2024-03-09", "20:10", "расход", "развлечения", 1200, "Бильярд"],
-    ["2024-03-08", "09:15", "расход", "транспорт", 80, "Автобус"],
-    ["2024-03-07", "15:45", "приход", "дивиденды", 8000, "Брокер"],
-    ["2024-03-06", "18:30", "расход", "питание", 2000, "Ресторан"]
-]
+import datetime
+import os
 
+# ==============================
+# ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+# ==============================
 
-# ============================================
-# 2. ПИРАМИДАЛЬНАЯ СОРТИРОВКА (HEAP SORT)
-# ============================================
+def safe_input_int(prompt, min_val=None, max_val=None):
+    while True:
+        try:
+            value = int(input(prompt))
+            if min_val is not None and value < min_val:
+                print(f"Значение должно быть не меньше {min_val}.")
+                continue
+            if max_val is not None and value > max_val:
+                print(f"Значение должно быть не больше {max_val}.")
+                continue
+            return value
+        except ValueError:
+            print("Пожалуйста, введите целое число.")
+
+def safe_input_time(prompt):
+    while True:
+        time_str = input(prompt).strip()
+        try:
+            datetime.datetime.strptime(time_str, "%H:%M")
+            return time_str
+        except ValueError:
+            print("Неверный формат времени. Используйте ЧЧ:ММ (например, 18:30).")
+
+def safe_input_date(prompt):
+    while True:
+        date_str = input(prompt).strip()
+        try:
+            datetime.datetime.strptime(date_str, "%Y-%m-%d")
+            return date_str
+        except ValueError:
+            print("Неверный формат даты. Используйте ГГГГ-ММ-ДД (например, 2026-01-12).")
+
+def parse_time(time_str):
+    return datetime.datetime.strptime(time_str, "%H:%M").time()
+
+def invert_string_for_desc_sort(s):
+    """Преобразует строку в кортеж отрицательных кодов символов для инверсии порядка при сортировке по убыванию."""
+    return tuple(-ord(c) for c in s)
+
+# ==============================
+# ПИРАМИДАЛЬНАЯ СОРТИРОВКА
+# ==============================
 
 def heapify(arr, n, i, key_func):
-    """Преобразует поддерево в кучу"""
     largest = i
     left = 2 * i + 1
     right = 2 * i + 2
 
     if left < n and key_func(arr[left]) > key_func(arr[largest]):
         largest = left
-
     if right < n and key_func(arr[right]) > key_func(arr[largest]):
         largest = right
 
@@ -49,240 +64,225 @@ def heapify(arr, n, i, key_func):
         arr[i], arr[largest] = arr[largest], arr[i]
         heapify(arr, n, largest, key_func)
 
-
 def heap_sort(arr, key_func):
-    """Основная функция пирамидальной сортировки"""
     n = len(arr)
-
-    # Строим максимальную кучу
     for i in range(n // 2 - 1, -1, -1):
         heapify(arr, n, i, key_func)
-
-    # Извлекаем элементы из кучи
     for i in range(n - 1, 0, -1):
         arr[i], arr[0] = arr[0], arr[i]
         heapify(arr, i, 0, key_func)
 
-    return arr
+# ==============================
+# ЗАГРУЗКА ДАННЫХ
+# ==============================
 
+def load_transactions(filename="transactions.txt"):
+    if not os.path.exists(filename):
+        print(f"Ошибка: файл '{filename}' не найден.")
+        return None
 
-# ============================================
-# 3. ФУНКЦИИ ДЛЯ РАЗНЫХ ОТЧЕТОВ
-# ============================================
-
-def report1_all_income_last_n_days():
-    """Отчет 1: Поступления за последние N дней"""
-    print("\n" + "=" * 60)
-    print("ОТЧЕТ 1: ПОСТУПЛЕНИЯ ЗА ПОСЛЕДНИЕ N ДНЕЙ")
-    print("=" * 60)
-
+    transactions = []
+    line_num = 0
     try:
-        n = int(input("Введите количество дней (N): "))
-    except:
-        print("Ошибка! Введите число.")
+        with open(filename, "r", encoding="utf-8") as f:
+            for line in f:
+                line_num += 1
+                line = line.strip()
+                if not line:
+                    continue
+                parts = line.split("|")
+                if len(parts) != 6:
+                    print(f"Предупреждение: пропущена строка {line_num} (ожидается 6 полей).")
+                    continue
+                date, time, direction, category, amount_str, counterparty = parts
+
+                if direction not in ("приход", "расход"):
+                    print(f"Предупреждение: строка {line_num} — неверное направление '{direction}'. Пропущено.")
+                    continue
+
+                try:
+                    amount = int(amount_str)
+                    if amount <= 0:
+                        print(f"Предупреждение: строка {line_num} — сумма должна быть положительной. Пропущено.")
+                        continue
+                except ValueError:
+                    print(f"Предупреждение: строка {line_num} — неверная сумма '{amount_str}'. Пропущено.")
+                    continue
+
+                try:
+                    datetime.datetime.strptime(date, "%Y-%m-%d")
+                    datetime.datetime.strptime(time, "%H:%M")
+                except ValueError:
+                    print(f"Предупреждение: строка {line_num} — неверный формат даты/времени. Пропущено.")
+                    continue
+
+                transactions.append({
+                    "date": date,
+                    "time": time,
+                    "direction": direction,
+                    "category": category,
+                    "amount": amount,
+                    "counterparty": counterparty
+                })
+    except Exception as e:
+        print(f"Ошибка при чтении файла: {e}")
+        return None
+    return transactions
+
+def save_transactions(transactions, filename="transactions.txt"):
+    try:
+        with open(filename, "w", encoding="utf-8") as f:
+            for t in transactions:
+                f.write(f"{t['date']}|{t['time']}|{t['direction']}|{t['category']}|{t['amount']}|{t['counterparty']}\n")
+        print("Изменения сохранены в файл.")
+    except Exception as e:
+        print(f"Ошибка при сохранении: {e}")
+
+# ==============================
+# ОТЧЁТЫ (ПОЛНОСТЬЮ СООТВЕТСТВУЮЩИЕ УСЛОВИЮ)
+# ==============================
+
+def report_1(transactions, n_days):
+    all_dates = [datetime.datetime.strptime(t["date"], "%Y-%m-%d").date() for t in transactions]
+    today = max(all_dates) if all_dates else datetime.date.today()
+    cutoff = today - datetime.timedelta(days=n_days)
+
+    income = [t for t in transactions if t["direction"] == "приход" and
+              datetime.datetime.strptime(t["date"], "%Y-%m-%d").date() >= cutoff]
+
+    if not income:
+        print("\nНет поступлений за указанный период.")
         return
 
-    # Фильтруем поступления
-    income_list = [t for t in transactions if t[2] == "приход"]
+    def key_func(t):
+        dt = datetime.datetime.strptime(f"{t['date']} {t['time']}", "%Y-%m-%d %H:%M")
+        return (dt, t["amount"])  # дата ↓, сумма ↓ → heap_sort (убывание) — всё верно
 
-    # Сортируем по дате (убывание) и сумме (убывание)
-    # Сначала сортируем по сумме (вторичный ключ)
-    income_list = heap_sort(income_list, lambda x: x[4])
-    income_list.reverse()  # по убыванию суммы
+    heap_sort(income, key_func)
 
-    # Затем сортируем по дате (первичный ключ)
-    income_list = heap_sort(income_list, lambda x: x[0])
-    income_list.reverse()  # по убыванию даты
+    print(f"\n=== Отчёт 1: Поступления за последние {n_days} дней ===")
+    for t in income:
+        print(f"{t['date']} {t['time']} | {t['category']:12} | {t['amount']:6} ₽ | {t['counterparty']}")
 
-    print(f"\nПоступления за последние {n} дней:")
-    print("-" * 60)
-    print("Дата       | Время | Категория   | Сумма   | Контрагент")
-    print("-" * 60)
+def report_2(transactions, category):
+    expenses = [t for t in transactions if t["direction"] == "расход" and t["category"] == category]
 
-    count = 0
-    total = 0
-    for t in income_list:
-        print(f"{t[0]} | {t[1]} | {t[3]:11} | {t[4]:7} | {t[5]}")
-        count += 1
-        total += t[4]
-        if count >= n * 2:
-            break
-
-    print("-" * 60)
-    print(f"Всего: {count} записей, Сумма: {total} руб.")
-    print("=" * 60)
-
-
-def report2_expenses_by_category():
-    """Отчет 2: Затраты по категории"""
-    print("\n" + "=" * 60)
-    print("ОТЧЕТ 2: ЗАТРАТЫ ПО КАТЕГОРИИ")
-    print("=" * 60)
-
-    categories = ["питание", "транспорт", "развлечения", "коммуналка",
-                  "одежда", "медицина", "образование", "кредит"]
-
-    print("Доступные категории:")
-    for i, cat in enumerate(categories, 1):
-        print(f"{i}. {cat}")
-
-    try:
-        choice = int(input("\nВыберите категорию (1-8): "))
-        if choice < 1 or choice > 8:
-            print("Неверный выбор!")
-            return
-        selected_category = categories[choice - 1]
-    except:
-        print("Ошибка ввода!")
+    if not expenses:
+        print(f"\nНет расходов по категории '{category}'.")
         return
 
-    # Фильтруем расходы по выбранной категории
-    expenses = [t for t in transactions if t[2] == "расход" and t[3] == selected_category]
+    def key_func(t):
+        dt = datetime.datetime.strptime(f"{t['date']} {t['time']}", "%Y-%m-%d %H:%M")
+        contr_key = invert_string_for_desc_sort(t["counterparty"])  # для контрагента ↑ при сортировке ↓
+        return (dt, contr_key, t["amount"])
 
-    # 1. Сортируем по сумме (убывание)
-    expenses = heap_sort(expenses, lambda x: x[4])
-    expenses.reverse()
+    heap_sort(expenses, key_func)
 
-    # 2. Сортируем по контрагенту (возрастание)
-    expenses = heap_sort(expenses, lambda x: x[5])
-
-    # 3. Сортируем по дате (убывание)
-    expenses = heap_sort(expenses, lambda x: x[0])
-    expenses.reverse()
-
-    print(f"\nЗатраты по категории '{selected_category}':")
-    print("-" * 60)
-    print("Дата       | Время | Сумма   | Контрагент")
-    print("-" * 60)
-
-    total = 0
+    print(f"\n=== Отчёт 2: Расходы по категории '{category}' ===")
     for t in expenses:
-        print(f"{t[0]} | {t[1]} | {t[4]:7} | {t[5]}")
-        total += t[4]
+        print(f"{t['date']} {t['time']} | {t['counterparty']:20} | {t['amount']:6} ₽")
 
-    print("-" * 60)
-    print(f"Всего: {len(expenses)} записей, Сумма: {total} руб.")
-    print("=" * 60)
-
-
-def report3_expenses_by_time():
-    """Отчет 3: Затраты в определенное время"""
-    print("\n" + "=" * 60)
-    print("ОТЧЕТ 3: ЗАТРАТЫ ВО ВРЕМЕННОМ ПРОМЕЖУТКЕ")
-    print("=" * 60)
-
+def report_3(transactions, start_time_str, end_time_str):
     try:
-        start_hour = int(input("Начальный час (0-23): "))
-        end_hour = int(input("Конечный час (0-23): "))
-
-        if start_hour < 0 or start_hour > 23 or end_hour < 0 or end_hour > 23:
-            print("Часы должны быть от 0 до 23!")
-            return
-        if start_hour >= end_hour:
-            print("Начальный час должен быть меньше конечного!")
-            return
+        start_time = parse_time(start_time_str)
+        end_time = parse_time(end_time_str)
     except:
-        print("Ошибка ввода!")
+        print("Неверный формат времени.")
         return
 
-    # Фильтруем расходы по времени
+    if start_time > end_time:
+        print("Начальное время не должно быть позже конечного.")
+        return
+
     expenses = []
     for t in transactions:
-        if t[2] == "расход":
-            hour = int(t[1].split(":")[0])  # получаем час из времени
-            if start_hour <= hour <= end_hour:
-                expenses.append(t)
+        if t["direction"] != "расход":
+            continue
+        trans_time = parse_time(t["time"])
+        if start_time <= trans_time <= end_time:
+            expenses.append(t)
 
-    # 1. Сортируем по контрагенту (возрастание)
-    expenses = heap_sort(expenses, lambda x: x[5])
+    if not expenses:
+        print(f"\nНет расходов в период с {start_time_str} до {end_time_str}.")
+        return
 
-    # 2. Сортируем по сумме (убывание)
-    expenses = heap_sort(expenses, lambda x: x[4])
-    expenses.reverse()
+    def key_func(t):
+        contr_key = invert_string_for_desc_sort(t["counterparty"])
+        return (t["amount"], contr_key)  # сумма ↓, контрагент ↑
 
-    print(f"\nЗатраты с {start_hour}:00 до {end_hour}:00:")
-    print("-" * 60)
-    print("Дата       | Время | Категория   | Сумма   | Контрагент")
-    print("-" * 60)
+    heap_sort(expenses, key_func)
 
-    total = 0
+    print(f"\n=== Отчёт 3: Расходы с {start_time_str} до {end_time_str} ===")
     for t in expenses:
-        print(f"{t[0]} | {t[1]} | {t[3]:11} | {t[4]:7} | {t[5]}")
-        total += t[4]
+        print(f"{t['time']} | {t['counterparty']:20} | {t['amount']:6} ₽ | {t['category']}")
 
-    print("-" * 60)
-    print(f"Всего: {len(expenses)} записей, Сумма: {total} руб.")
-    print("=" * 60)
-
-
-def show_all_transactions():
-    print("\n" + "=" * 70)
-    print("ВСЕ ТРАНЗАКЦИИ")
-    print("=" * 70)
-    print("Дата       | Время | Направление | Категория   | Сумма   | Контрагент")
-    print("-" * 70)
-
-    total_income = 0
-    total_expense = 0
-
-    for t in transactions:
-        direction_symbol = "+" if t[2] == "приход" else "-"
-        print(f"{t[0]} | {t[1]} | {t[2]:11} | {t[3]:11} | {t[4]:7} | {t[5]}")
-
-        if t[2] == "приход":
-            total_income += t[4]
-        else:
-            total_expense += t[4]
-
-    print("-" * 70)
-    print(f"Приход: {total_income} руб.")
-    print(f"Расход: {total_expense} руб.")
-    print(f"Баланс: {total_income - total_expense} руб.")
-    print("=" * 70)
-
-
-# ============================================
-# 4. ГЛАВНОЕ МЕНЮ
-# ============================================
+# ==============================
+# МЕНЮ
+# ==============================
 
 def main():
+    transactions = load_transactions()
+    if transactions is None:
+        print("Не удалось загрузить данные. Убедитесь, что файл 'transactions.txt' существует и имеет правильный формат.")
+        return
+
     while True:
-        print("\n" + "=" * 50)
-        print("ПРОГРАММА 'ПЕРСОНАЛЬНЫЙ БЮДЖЕТ'")
-        print("=" * 50)
+        print("\n" + "="*50)
+        print("Персональный бюджет — Главное меню")
+        print("="*50)
         print("1. Показать все транзакции")
-        print("2. Отчет 1: Поступления за N дней")
-        print("3. Отчет 2: Затраты по категории")
-        print("4. Отчет 3: Затраты в определенное время")
-        print("5. Выход")
-        print("=" * 50)
+        print("2. Отчёт 1: Поступления за N дней")
+        print("3. Отчёт 2: Расходы по категории")
+        print("4. Отчёт 3: Расходы в интервале времени")
+        print("5. Добавить транзакцию")
+        print("6. Сохранить изменения")
+        print("0. Выход")
+        choice = safe_input_int("Выберите действие (0-6): ", min_val=0, max_val=6)
 
-        choice = input("Выберите действие (1-5): ")
-
-        if choice == "1":
-            show_all_transactions()
-        elif choice == "2":
-            report1_all_income_last_n_days()
-        elif choice == "3":
-            report2_expenses_by_category()
-        elif choice == "4":
-            report3_expenses_by_time()
-        elif choice == "5":
-            print("\nСпасибо за использование программы!")
+        if choice == 0:
+            print("До свидания!")
             break
-        else:
-            print("Неверный выбор! Попробуйте еще раз.")
-
-        input("\nНажмите Enter для продолжения...")
-
-
-# ============================================
-# ЗАПУСК ПРОГРАММЫ
-# ============================================
+        elif choice == 1:
+            print("\n=== Все транзакции ===")
+            for i, t in enumerate(transactions, 1):
+                print(f"{i:2}. {t['date']} {t['time']} | {t['direction']:6} | {t['category']:12} | {t['amount']:6} ₽ | {t['counterparty']}")
+        elif choice == 2:
+            n = safe_input_int("Введите количество дней N: ", min_val=1)
+            report_1(transactions, n)
+        elif choice == 3:
+            cat = input("Введите категорию (например, 'питание'): ").strip()
+            if not cat:
+                print("Категория не может быть пустой.")
+            else:
+                report_2(transactions, cat)
+        elif choice == 4:
+            start_t = safe_input_time("Введите начальное время (ЧЧ:ММ): ")
+            end_t = safe_input_time("Введите конечное время (ЧЧ:ММ): ")
+            report_3(transactions, start_t, end_t)
+        elif choice == 5:
+            print("\n--- Добавление новой транзакции ---")
+            date = safe_input_date("Дата (ГГГГ-ММ-ДД): ")
+            time = safe_input_time("Время (ЧЧ:ММ): ")
+            direction = input("Направление (приход/расход): ").strip().lower()
+            if direction not in ("приход", "расход"):
+                print("Направление должно быть 'приход' или 'расход'.")
+                continue
+            category = input("Категория (например, зарплата, питание): ").strip()
+            if not category:
+                print("Категория не может быть пустой.")
+                continue
+            amount = safe_input_int("Сумма (положительное число): ", min_val=1)
+            counterparty = input("Контрагент: ").strip()
+            if not counterparty:
+                print("Контрагент не может быть пустым.")
+                continue
+            transactions.append({
+                "date": date, "time": time, "direction": direction,
+                "category": category, "amount": amount, "counterparty": counterparty
+            })
+            print("Транзакция добавлена.")
+        elif choice == 6:
+            save_transactions(transactions)
 
 if __name__ == "__main__":
-    print("=" * 60)
-    print("Всего записей в базе:", len(transactions))
-    print("=" * 60)
-
     main()
