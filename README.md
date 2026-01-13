@@ -139,7 +139,7 @@ def save_transactions(transactions, filename="transactions.txt"):
         print(f"Ошибка при сохранении: {e}")
 
 # ==============================
-# ОТЧЁТЫ (ПОЛНОСТЬЮ СООТВЕТСТВУЮЩИЕ УСЛОВИЮ)
+# ОТЧЁТЫ
 # ==============================
 
 def report_1(transactions, n_days):
